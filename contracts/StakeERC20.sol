@@ -34,6 +34,7 @@ contract StakeERC20 {
 
     function stake(uint256 _amount, uint256 _duration) external {
         require(msg.sender != address(0), "Address zero detected");
+        require(users[msg.sender].stakedBalance == 0, "Already staked");
         require(_amount > 0, "Amount cannot be zero");
         require(_duration > 0, "Invalid duration");
 
@@ -43,7 +44,6 @@ contract StakeERC20 {
                 (rewardRatePerSec / totalStakedAmountBal) *
                 (block.timestamp - lastUpdateTime);
         }
-
         // Update the reward per token paid for the user
         foundUser.rewardPerTokenPaid = currentRewardPerToken;
 
