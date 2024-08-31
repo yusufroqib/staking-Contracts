@@ -67,4 +67,6 @@ contract StakeETH is ReentrancyGuard {
         Stake storage userStake = stakes[msg.sender];
         return (userStake.amount, userStake.startTime, userStake.endTime, calculateReward(msg.sender));
     }
+
+     receive() external payable {}
 }
