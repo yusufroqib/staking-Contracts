@@ -13,8 +13,8 @@ contract StakeETH is ReentrancyGuard {
     }
 
     mapping(address => Stake) public stakes;
-    uint256 public constant MINIMUM_STAKE = 0.1 ether;
-    uint256 public constant STAKING_PERIOD = 30 days;
+    uint256 public constant MINIMUM_STAKE = 0.0001 ether;
+    uint256 public constant STAKING_PERIOD = 2 days;
     uint256 public constant REWARD_RATE = 10; // 10% APY
 
     event Staked(address indexed user, uint256 amount, uint256 startTime, uint256 endTime);
