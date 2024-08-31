@@ -25,7 +25,6 @@ contract StakeERC20 {
     // Define events
     event Staked(address indexed user, uint256 amount, uint256 duration);
     event Withdrawn(address indexed user, uint256 amount, uint256 reward);
-    event RewardPaid(address indexed user, uint256 reward);
 
     constructor(address _tokenAddress) {
         owner = msg.sender;
@@ -94,7 +93,6 @@ contract StakeERC20 {
 
         // Emit the Withdrawn and RewardPaid events
         emit Withdrawn(msg.sender, foundUserStakedBal, foundUserRewardEarned);
-        emit RewardPaid(msg.sender, foundUserRewardEarned);
     }
 
     function myReward() external view returns (uint256) {
