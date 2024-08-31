@@ -3,7 +3,7 @@ pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract ROCCO is ERC20("Rocco Token", "RCO") {
+contract Rocco is ERC20("Rocco Token", "RCO") {
     address public owner;
     address public allowedContract;
 

@@ -8,4 +8,4 @@ const StakeETHModule = buildModule("StakeETHModule", (m) => {
 
 export default StakeETHModule;
 
-// Deployed StakeETH: 0x99c9565F3769D40641429967604144a7Ba48AAA4
+// Deployed StakeETH: 0x8c5ACDD9D041E9A84900a7C09D264b2a8a3DD8f1
