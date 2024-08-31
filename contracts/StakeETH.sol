@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.7;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract StakeETH is ReentrancyGuard {
-    using SafeMath for uint256;
-
     struct Stake {
         uint256 amount;
         uint256 startTime;
@@ -27,7 +25,7 @@ contract StakeETH is ReentrancyGuard {
         require(stakes[msg.sender].amount == 0, "Already staking");
 
         uint256 startTime = block.timestamp;
-        uint256 endTime = startTime.add(STAKING_PERIOD);
+        uint256 endTime = startTime + STAKING_PERIOD;
 
         stakes[msg.sender] = Stake({
             amount: msg.value,
@@ -45,7 +43,7 @@ contract StakeETH is ReentrancyGuard {
         require(block.timestamp >= userStake.endTime, "Staking period not ended");
 
         uint256 reward = calculateReward(msg.sender);
-        uint256 totalAmount = userStake.amount.add(reward);
+        uint256 totalAmount = userStake.amount + reward;
 
         userStake.amount = 0;
         userStake.reward = 0;
@@ -60,12 +58,9 @@ contract StakeETH is ReentrancyGuard {
         Stake storage userStake = stakes[user];
         if (userStake.amount == 0) return 0;
 
-        uint256 stakingDuration = block.timestamp.sub(userStake.startTime);
-        if (stakingDuration > STAKING_PERIOD) {
-            stakingDuration = STAKING_PERIOD;
-        }
+        uint256 stakingDuration = Math.min(block.timestamp - userStake.startTime, STAKING_PERIOD);
 
-        return userStake.amount.mul(REWARD_RATE).mul(stakingDuration).div(365 days).div(100);
+        return (userStake.amount * REWARD_RATE * stakingDuration) / (365 days) / 100;
     }
 
     function getStakeInfo() external view returns (uint256, uint256, uint256, uint256) {
