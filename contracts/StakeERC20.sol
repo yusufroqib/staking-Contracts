@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -22,6 +22,11 @@ contract StakeERC20 {
 
     mapping(address => User) public users;
 
+    // Define events
+    event Staked(address indexed user, uint256 amount, uint256 duration);
+    event Withdrawn(address indexed user, uint256 amount, uint256 reward);
+    event RewardPaid(address indexed user, uint256 reward);
+
     constructor(address _tokenAddress) {
         owner = msg.sender;
         tokenAddress = _tokenAddress;
@@ -30,7 +35,7 @@ contract StakeERC20 {
     function stake(uint256 _amount, uint256 _duration) external {
         require(msg.sender != address(0), "Address zero detected");
         require(_amount > 0, "Amount cannot be zero");
-        require(_duration > 0, "invalid duration");
+        require(_duration > 0, "Invalid duration");
 
         User storage foundUser = users[msg.sender];
         if (totalStakedAmountBal > 0) {
@@ -39,26 +44,30 @@ contract StakeERC20 {
                 (block.timestamp - lastUpdateTime);
         }
 
-        //Update the reward per token paid for the user
+        // Update the reward per token paid for the user
         foundUser.rewardPerTokenPaid = currentRewardPerToken;
 
         uint256 _userTokenBalance = IERC20(tokenAddress).balanceOf(msg.sender);
-        require(_userTokenBalance >= _amount, "insufficient fund");
+        require(_userTokenBalance >= _amount, "Insufficient funds");
         IERC20(tokenAddress).transferFrom(msg.sender, address(this), _amount);
         foundUser.endStakeDate = block.timestamp + _duration;
         totalStakedAmountBal += _amount;
         foundUser.stakedBalance += _amount;
         lastUpdateTime = block.timestamp;
+
+        // Emit the Staked event
+        emit Staked(msg.sender, _amount, _duration);
     }
 
     function withdraw() external {
         require(msg.sender != address(0), "Address zero detected");
-        require(totalStakedAmountBal > 0, "No fund in staking pool");
+        require(totalStakedAmountBal > 0, "No funds in staking pool");
         require(users[msg.sender].stakedBalance > 0, "No deposit made");
         require(
             block.timestamp >= users[msg.sender].endStakeDate,
-            "Withdrawal date no reached"
+            "Withdrawal date not reached"
         );
+
         User storage foundUser = users[msg.sender];
         uint256 foundUserStakedBal = foundUser.stakedBalance;
         foundUser.stakedBalance = 0;
@@ -67,12 +76,11 @@ contract StakeERC20 {
             (rewardRatePerSec / totalStakedAmountBal) *
             (block.timestamp - lastUpdateTime);
 
-
-        //Calculating reward eard by a user
+        // Calculate reward earned by the user
         uint256 foundUserRewardEarned = foundUserStakedBal *
             (currentRewardPerToken - foundUser.rewardPerTokenPaid);
 
-        //Update the reward per token paid for the user
+        // Update the reward per token paid for the user
         foundUser.rewardPerTokenPaid = currentRewardPerToken;
 
         uint256 withdrawalAmount = foundUserRewardEarned + foundUserStakedBal;
@@ -80,12 +88,14 @@ contract StakeERC20 {
         uint256 foundUserDeposit = foundUserStakedBal;
         totalStakedAmountBal -= foundUserDeposit;
         IROCCO(tokenAddress).mint(foundUserRewardEarned);
-        // require(currentRewardPerToken == 0, "reverted for now");
+
         IERC20(tokenAddress).transfer(msg.sender, withdrawalAmount);
         lastUpdateTime = block.timestamp;
-    }
 
-    // function mint
+        // Emit the Withdrawn and RewardPaid events
+        emit Withdrawn(msg.sender, foundUserStakedBal, foundUserRewardEarned);
+        emit RewardPaid(msg.sender, foundUserRewardEarned);
+    }
 
     function myReward() external view returns (uint256) {
         require(msg.sender != address(0), "Address zero detected");
@@ -98,7 +108,7 @@ contract StakeERC20 {
         uint256 accumCurrentRewardPerToken = currentRewardPerToken +
             _rewardPerTokenNow;
 
-        //Calculating reward eard by a user
+        // Calculate reward earned by the user
         uint256 foundUserRewardEarned = foundUser.stakedBalance *
             (accumCurrentRewardPerToken - foundUser.rewardPerTokenPaid);
 
